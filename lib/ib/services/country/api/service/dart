@@ -1,0 +1,29 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import '../models/country.dart';
+import 'api_exception.dart';
+
+class CountryApiService {
+  static const String _baseUrl = 'https://restcountries.com/v3.1';
+
+  void _checkResponse(http.Response response) {
+    if (response.statusCode != 200) {
+      throw ApiException('Failed to load data', statusCode: response.statusCode);
+    }
+  }
+
+  Future<List<Country>> fetchCountries() async {
+    try {
+      final response = await http
+          .get(Uri.parse('$_baseUrl/all?fields=name,flags,region'))
+          .timeout(const Duration(seconds: 10));
+
+      _checkResponse(response);
+      
+      final List<dynamic> data = json.decode(response.body);
+      return data.map((json) => Country.fromJson(json)).toList();
+    } catch (e) {
+      throw ApiException(e.toString());
+    }
+  }
+}
